@@ -2,7 +2,7 @@
 #import "XMPPSASLAuthentication.h"
 #import "XMPPCustomBinding.h"
 #import "GCDMulticastDelegate.h"
-
+#import "XMPPFeature.h"
 
 @import KissXML;
 @import CocoaAsyncSocket;
@@ -18,7 +18,11 @@ NS_ASSUME_NONNULL_BEGIN
 @class XMPPModule;
 @class XMPPElement;
 @class XMPPElementReceipt;
+@class XMPPFeature;
+
 @protocol XMPPStreamDelegate;
+@protocol XMPPElementHandler;
+@protocol XMPPStreamPreprocessor;
 
 #if TARGET_OS_IPHONE
   #define MIN_KEEPALIVE_INTERVAL      20.0 // 20 Seconds
@@ -720,6 +724,18 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
 - (void)autoAddDelegate:(id)delegate delegateQueue:(dispatch_queue_t)delegateQueue toModulesOfClass:(Class)aClass;
 - (void)removeAutoDelegate:(id)delegate delegateQueue:(dispatch_queue_t)delegateQueue fromModulesOfClass:(Class)aClass;
 
+/**
+ * added feature support
+ **/
+- (void)addFeature:(XMPPFeature *)feature;
+- (void)removeFeature:(XMPPFeature *)feature;
+- (void)addStreamPreprocessor:(id<XMPPStreamPreprocessor>)preprocessor;
+- (void)removeStreamPreprocessor:(id<XMPPStreamPreprocessor>)preprocessor;
+- (void)addElementHandler:(id<XMPPElementHandler>)handler;
+- (void)removeElementHandler:(id<XMPPElementHandler>)handler;
+- (void)writeDataForCompression:(NSData *)data;
+- (void)readDataWithTimeoutForCompression;
+- (void)sendOpeningNegotiation;
 /**
  * Allows for enumeration of the currently registered modules.
  * 

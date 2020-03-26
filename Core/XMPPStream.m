@@ -5,7 +5,7 @@
 #import "XMPPIDTracker.h"
 #import "XMPPSRVResolver.h"
 #import "NSData+XMPP.h"
-
+#import "XMPPFeature.h"
 #import <objc/runtime.h>
 #import <libkern/OSAtomic.h>
 
@@ -142,6 +142,10 @@ enum XMPPStreamConfig
 	NSCountedSet *customElementNames;
 	
 	id userTag;
+	
+	NSMutableArray * registeredFeatures;
+    NSMutableArray * registeredStreamPreprocessors;
+    NSMutableArray * registeredElementHandlers;
 }
 
 @end
@@ -198,6 +202,10 @@ enum XMPPStreamConfig
 	
 	receipts = [[NSMutableArray alloc] init];
     preferIPv6 = YES;
+	
+	registeredFeatures = [[NSMutableArray alloc] init];
+	registeredStreamPreprocessors = [[NSMutableArray alloc] init];
+    registeredElementHandlers = [[NSMutableArray alloc] init];
 }
 
 /**
@@ -3543,6 +3551,23 @@ enum XMPPStreamConfig
 		return;
     }
 	
+	// According to XEP-0170: Recommended Order of Stream Feature Negotiation
+    // Stream Compression should be before resource binding.
+    // Currently only Stream Compression external feature is supported,
+    // so just put the for loop before the resource binding.
+    // When (if has more requirement) resource binding feature is also removed
+    // out of XMPStream as a separated Feature (module), we can use the sequence
+    // of the array items to control the order.
+    
+    NSXMLElement *f_need_auth = [features elementForName:@"auth" xmlns:@"http://jabber.org/features/iq-auth"];
+    if (!f_need_auth) { // we must ensure authentication come first
+        for (XMPPFeature * feature in registeredFeatures) {
+            if ([feature handleFeatures:features]) {
+                return ;
+            }
+        }
+    }
+	
 	// Check to see if resource binding is required
 	// Don't forget about that NSXMLElement bug you reported to apple (xmlns is required or element won't be found)
 	NSXMLElement *f_bind = [features elementForName:@"bind" xmlns:@"urn:ietf:params:xml:ns:xmpp-bind"];
@@ -4315,7 +4340,12 @@ enum XMPPStreamConfig
 	lastSendReceiveTime = [NSDate timeIntervalSinceReferenceDate];
 	numberOfBytesReceived += [data length];
 	
-	XMPPLogRecvPre(@"RECV: %@", [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
+	NSData * newData = data;
+    for (id<XMPPStreamPreprocessor> f in registeredStreamPreprocessors) {
+        newData = [f processInputData:newData];
+    }
+    	
+	XMPPLogRecvPre(@"RECV: %@", [[NSString alloc] initWithData:newData encoding:NSUTF8StringEncoding]);
 	
 	// Asynchronously parse the xml data
 	[parser parseData:data];
@@ -5081,6 +5111,64 @@ enum XMPPStreamConfig
     GCDAsyncSocket *socket = [[GCDAsyncSocket alloc] initWithDelegate:self delegateQueue:xmppQueue];
     socket.IPv4PreferredOverIPv6 = !self.preferIPv6;
     return socket;
+}
+
+#pragma mark -
+// Feature support
+- (void)addFeature:(XMPPFeature *)feature
+{
+    if (![registeredFeatures containsObject:feature]) {
+        [registeredFeatures addObject:feature];
+    }
+}
+
+- (void)removeFeature:(XMPPFeature *)feature
+{
+    if ([registeredFeatures containsObject:feature]) {
+        [registeredFeatures removeObject:feature];
+    }
+}
+
+- (void)addStreamPreprocessor:(id<XMPPStreamPreprocessor>)preprocessor
+{
+    if (![registeredStreamPreprocessors containsObject:preprocessor]) {
+        [registeredStreamPreprocessors addObject:preprocessor];
+    }
+}
+
+- (void)removeStreamPreprocessor:(id<XMPPStreamPreprocessor>)preprocessor
+{
+    if ([registeredStreamPreprocessors containsObject:preprocessor]) {
+        [registeredStreamPreprocessors removeObject:preprocessor];
+    }
+}
+
+- (void)addElementHandler:(id<XMPPElementHandler>)handler
+{
+    if (![registeredElementHandlers containsObject:handler]) {
+        [registeredElementHandlers addObject:handler];
+    }
+}
+
+- (void)removeElementHandler:(id<XMPPElementHandler>)handler
+{
+    if ([registeredElementHandlers containsObject:handler]) {
+        [registeredElementHandlers removeObject:handler];
+    }
+}
+
+- (void)writeDataForCompression:(NSData *)data
+{
+    NSData * newData = data;
+    for (id<XMPPStreamPreprocessor> f in registeredStreamPreprocessors) {
+        newData = [f processOutputData:newData];
+    }
+    numberOfBytesSent += [newData length];
+    [asyncSocket writeData:newData withTimeout:TIMEOUT_XMPP_WRITE tag:TAG_XMPP_WRITE_STREAM];
+}
+
+- (void)readDataWithTimeoutForCompression {
+	[asyncSocket readDataWithTimeout:TIMEOUT_XMPP_READ_START tag:TAG_XMPP_READ_START];
 }
 
 @end
