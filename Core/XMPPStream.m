@@ -3561,7 +3561,7 @@ enum XMPPStreamConfig
     
     NSXMLElement *f_need_auth = [features elementForName:@"auth" xmlns:@"http://jabber.org/features/iq-auth"];
 	NSLog(@"#Compression: handleStreamFeatures");
-    if (!f_need_auth) { // we must ensure authentication come first
+    if ([self isAuthenticated]) { // we must ensure authentication come first
 		NSLog(@"#Compression: authenticated");
         for (XMPPFeature * feature in registeredFeatures) {
             if ([feature handleFeatures:features]) {

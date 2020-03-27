@@ -141,6 +141,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
 
 - (BOOL)handleCompressed:(NSXMLElement *)element
 {
+    NSLog(@"#Compression: compressed");
     XMPPLogTrace();
     //Using TLS is the first choice
     if ([self.xmppStream isSecure]) {
