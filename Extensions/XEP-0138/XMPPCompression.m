@@ -126,7 +126,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
                         
                         NSString *outgoingStr = [compress compactXMLString];
                         NSData *outgoingData = [outgoingStr dataUsingEncoding:NSUTF8StringEncoding];
-                        
+                        NSLog(@"#Compression: %@",outgoingStr);
                         XMPPLogSend(@"SEND: %@", outgoingStr);
                         
                         [self.xmppStream writeDataForCompression:outgoingData];
@@ -148,6 +148,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
     }
     if (XMPPCompressionStateRequestingCompress == self.compressionState) {
         if([[element name] isEqualToString:@"compressed"]) {
+            NSLog(@"#Compression: compressed");
             self.compressionState = XMPPCompressionStateCompressing;
             [self prepareCompression];
             [self startStream];
@@ -163,11 +164,13 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
     
     if([[element name] isEqualToString:@"failure"]) {
         if ([element elementForName:@"unsupported-method"]) {
+            NSLog(@"#Compression: unsupported-method");
             self.compressionState = XMPPCompressionStateFailureUnsupportedMethod;
             XMPPLogError(@"Compression Failure: %@", @"unsupported-method");
             handled = YES;
         }
         else if ([element elementForName:@"setup-failed"]) {
+            NSLog(@"#Compression: setup-failed");
             self.compressionState = XMPPCompressionStateFailureSetupFailed;
             XMPPLogError(@"Compression Failure: %@", @"setup-failed");
             handled = YES;
