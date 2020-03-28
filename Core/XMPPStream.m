@@ -3560,9 +3560,9 @@ enum XMPPStreamConfig
     // of the array items to control the order.
     
     NSXMLElement *f_need_auth = [features elementForName:@"auth" xmlns:@"http://jabber.org/features/iq-auth"];
-	NSLog(@"#Compression: handleStreamFeatures");
+	NSLog(@"Stream:  handleStreamFeatures");
     if ([self isAuthenticated]) { // we must ensure authentication come first
-		NSLog(@"#Compression: authenticated");
+		NSLog(@"Stream:  authenticated");
         for (XMPPFeature * feature in registeredFeatures) {
 			NSLog(@"#Compression feature: %@", feature);
             if ([feature handleFeatures:features]) {
@@ -3572,7 +3572,7 @@ enum XMPPStreamConfig
         }
     }
 	
-	NSLog(@"#Compression: binding");
+	NSLog(@"Stream:  binding");
 	// Check to see if resource binding is required
 	// Don't forget about that NSXMLElement bug you reported to apple (xmlns is required or element won't be found)
 	NSXMLElement *f_bind = [features elementForName:@"bind" xmlns:@"urn:ietf:params:xml:ns:xmpp-bind"];
@@ -3652,7 +3652,7 @@ enum XMPPStreamConfig
 **/
 - (void)handleAuth:(NSXMLElement *)authResponse
 {
-	NSLog(@"#Compression: handleAuth");
+	NSLog(@"Stream:  handleAuth");
 	NSAssert(dispatch_get_specific(xmppQueueTag), @"Invoked on incorrect queue");
 	
 	XMPPLogTrace();
@@ -3661,7 +3661,7 @@ enum XMPPStreamConfig
 	
 	if (result == XMPPHandleAuthResponseSuccess)
 	{
-		NSLog(@"#Compression: XMPPHandleAuthResponseSuccess");
+		NSLog(@"Stream:  XMPPHandleAuthResponseSuccess");
 		// We are successfully authenticated (via sasl:digest-md5)
 		[self setIsAuthenticated:YES];
 		
@@ -3700,7 +3700,7 @@ enum XMPPStreamConfig
 	}
 	else if (result == XMPPHandleAuthResponseFailed)
 	{
-		NSLog(@"#Compression: XMPPHandleAuthResponseFailed");
+		NSLog(@"Stream:  XMPPHandleAuthResponseFailed");
 		// Revert back to connected state (from authenticating state)
 		state = STATE_XMPP_CONNECTED;
 		
@@ -3713,13 +3713,13 @@ enum XMPPStreamConfig
 	}
 	else if (result == XMPPHandleAuthResponseContinue)
 	{
-		NSLog(@"#Compression: XMPPHandleAuthResponseContinue");
+		NSLog(@"Stream:  XMPPHandleAuthResponseContinue");
 		// Authentication continues.
 		// State doesn't change.
 	}
 	else
 	{
-		NSLog(@"#Compression: invalid response code");
+		NSLog(@"Stream:  invalid response code");
 		XMPPLogError(@"Authentication class (%@) returned invalid response code (%i)",
 		           NSStringFromClass([auth class]), (int)result);
 		
