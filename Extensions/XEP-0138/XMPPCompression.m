@@ -34,7 +34,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
     z_stream _inflation_strm;
     z_stream _deflation_strm;
 }
-@property (atomic, copy, readwrite) NSString *compressionMethod;
+@property (atomic, copy, readwrite) NSString * compressionMethod;
 @property (assign, readwrite) XMPPCompressionState compressionState;
 @end
 
@@ -126,7 +126,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
                         
                         NSString *outgoingStr = [compress compactXMLString];
                         NSData *outgoingData = [outgoingStr dataUsingEncoding:NSUTF8StringEncoding];
-                        NSLog(@"Stream:  %@",outgoingStr);
+//                        NSLog(@"Stream:  %@",outgoingStr);
                         XMPPLogSend(@"SEND: %@", outgoingStr);
                         
                         [self.xmppStream writeDataForCompression:outgoingData];
@@ -141,7 +141,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
 
 - (BOOL)handleCompressed:(NSXMLElement *)element
 {
-    NSLog(@"Stream:  compressed");
+//    NSLog(@"Stream:  compressed");
     XMPPLogTrace();
     //Using TLS is the first choice
     if ([self.xmppStream isSecure]) {
@@ -149,7 +149,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
     }
     if (XMPPCompressionStateRequestingCompress == self.compressionState) {
         if([[element name] isEqualToString:@"compressed"]) {
-            NSLog(@"Stream:  compressed");
+//            NSLog(@"Stream:  compressed");
             self.compressionState = XMPPCompressionStateCompressing;
             [self prepareCompression];
             [self startStream];
@@ -165,13 +165,13 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
     
     if([[element name] isEqualToString:@"failure"]) {
         if ([element elementForName:@"unsupported-method"]) {
-            NSLog(@"Stream:  unsupported-method");
+//            NSLog(@"Stream:  unsupported-method");
             self.compressionState = XMPPCompressionStateFailureUnsupportedMethod;
             XMPPLogError(@"Compression Failure: %@", @"unsupported-method");
             handled = YES;
         }
         else if ([element elementForName:@"setup-failed"]) {
-            NSLog(@"Stream:  setup-failed");
+//            NSLog(@"Stream:  setup-failed");
             self.compressionState = XMPPCompressionStateFailureSetupFailed;
             XMPPLogError(@"Compression Failure: %@", @"setup-failed");
             handled = YES;
@@ -267,7 +267,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
             }
         }
         if (ret >= Z_OK) {
-            XMPPLogRecvPost(@"RECV: Compression Rate:%.4f%%(%d/%d)", data.length * 1.0 / newData.length * 100.0f, data.length, newData.length);
+            XMPPLogRecvPost(@"RECV: Compression Rate:%.4f%%(%lu/%lu)", data.length * 1.0 / newData.length * 100.0f, (unsigned long)data.length, (unsigned long)newData.length);
         }
         returnData = newData;
     }
@@ -290,7 +290,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
 
             if (ret >= Z_OK) {
                 const uLongf len = bufferSize - _deflation_strm.avail_out;
-                XMPPLogSend(@"SEND: Compression Rate:%.4f%%(%ld/%d)", len * 1.0 / data.length * 100.0f, len, data.length);
+                XMPPLogSend(@"SEND: Compression Rate:%.4f%%(%ld/%lu)", len * 1.0 / data.length * 100.0f, len, (unsigned long)data.length);
                 returnData = [NSData dataWithBytesNoCopy:buffer length:len freeWhenDone:YES];
             }
             else {
@@ -346,7 +346,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
 {
     //This will reset parser, restart stream
     XMPPLogSend(@"SEND (start a compressing stream)");
-    [self.xmppStream sendOpeningNegotiation];
+    [self.xmppStream sendOpeningNegotiationAfterCompression];
     [self.xmppStream readDataWithTimeoutForCompression];
 }
 

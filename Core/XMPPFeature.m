@@ -63,15 +63,15 @@
     
     dispatch_block_t block = ^{
         
-        if (xmppStream != nil)
+        if (self->xmppStream != nil)
         {
             result = NO;
         }
         else
         {
-            xmppStream = aXmppStream;
+            self->xmppStream = aXmppStream;
             
-            [xmppStream addDelegate:self delegateQueue:featureQueue];
+            [self->xmppStream addDelegate:self delegateQueue:self->featureQueue];
             [self.xmppStream addFeature:self];
         }
     };
@@ -88,12 +88,12 @@
 {
     dispatch_block_t block = ^{
         
-        if (xmppStream)
+        if (self->xmppStream)
         {
-            [xmppStream removeDelegate:self delegateQueue:featureQueue];
+            [self->xmppStream removeDelegate:self delegateQueue:self->featureQueue];
             [self.xmppStream removeFeature:self];
             
-            xmppStream = nil;
+            self->xmppStream = nil;
         }
     };
     

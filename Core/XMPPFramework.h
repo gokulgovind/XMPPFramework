@@ -136,6 +136,8 @@
 #import "XMPPManagedMessaging.h"
 #import "XMPPAutoPing.h"
 #import "XMPPPing.h"
+#import "XMPPNewCompression.h"
+#import "XMPPCompression.h"
 #import "XMPPAutoTime.h"
 #import "XMPPTime.h"
 #import "NSXMLElement+XEP_0203.h"

@@ -3364,8 +3364,21 @@ enum XMPPStreamConfig
     {
 		if (myJID_setByClient)
 		{
-			temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@'>";
-            s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, [myJID_setByClient domain]];
+            DDXMLNode * w3f = [rootElement attributeForName:@"id"];
+            NSString * stream_id = @"";
+            if (w3f != nil) {
+                stream_id = [w3f stringValue];
+                NSLog(@"stream_id: %@",stream_id);
+            }
+            
+            if (![stream_id isEqualToString:@""]) {
+                temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@' id='%@'>";
+                s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, [myJID_setByClient domain], stream_id];
+            }else{
+                temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@'>";
+                s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, [myJID_setByClient domain]];
+            }
+			
 		}
         else if ([hostName length] > 0)
         {
@@ -3392,6 +3405,50 @@ enum XMPPStreamConfig
 	state = STATE_XMPP_OPENING;
 }
 
+- (void)sendOpeningNegotiationAfterCompression
+{
+	NSAssert(dispatch_get_specific(xmppQueueTag), @"Invoked on incorrect queue");
+	
+	XMPPLogTrace();
+	
+	
+	NSString *xmlns = @"jabber:client";
+	NSString *xmlns_stream = @"http://etherx.jabber.org/streams";
+	
+	NSString *temp, *s2;
+	
+	if (myJID_setByClient)
+	{
+		DDXMLNode * w3f = [rootElement attributeForName:@"id"];
+		NSString * stream_id = @"";
+		if (w3f != nil) {
+			stream_id = [w3f stringValue];
+			NSLog(@"stream_id: %@",stream_id);
+		}
+		
+		if (![stream_id isEqualToString:@""]) {
+			temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@' id='%@'>";
+			s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, [myJID_setByClient domain], stream_id];
+		}else{
+			temp = @"<stream:stream xmlns='%@' xmlns:stream='%@' version='1.0' to='%@'>";
+			s2 = [NSString stringWithFormat:temp, xmlns, xmlns_stream, [myJID_setByClient domain]];
+		}
+		
+	}
+	
+	
+	NSData *outgoingData = [s2 dataUsingEncoding:NSUTF8StringEncoding];
+	
+	XMPPLogSend(@"SEND: %@", s2);
+	numberOfBytesSent += [outgoingData length];
+	
+	[asyncSocket writeData:outgoingData
+			   withTimeout:TIMEOUT_XMPP_WRITE
+					   tag:TAG_XMPP_WRITE_START];
+	
+	// Update status
+	state = STATE_XMPP_OPENING;
+}
 /**
  * This method handles starting TLS negotiation on the socket, using the proper settings.
 **/
@@ -3560,19 +3617,17 @@ enum XMPPStreamConfig
     // of the array items to control the order.
     
     NSXMLElement *f_need_auth = [features elementForName:@"auth" xmlns:@"http://jabber.org/features/iq-auth"];
-	NSLog(@"Stream:  handleStreamFeatures");
+//	NSLog(@"Stream:  handleStreamFeatures");
     if ([self isAuthenticated]) { // we must ensure authentication come first
-		NSLog(@"Stream:  authenticated");
+//		NSLog(@"Stream:  authenticated");
         for (XMPPFeature * feature in registeredFeatures) {
-			NSLog(@"#Compression feature: %@", feature);
             if ([feature handleFeatures:features]) {
-				NSLog(@"#Compression handleFeatures");
                 return ;
             }
         }
     }
 	
-	NSLog(@"Stream:  binding");
+//	NSLog(@"Stream:  binding");
 	// Check to see if resource binding is required
 	// Don't forget about that NSXMLElement bug you reported to apple (xmlns is required or element won't be found)
 	NSXMLElement *f_bind = [features elementForName:@"bind" xmlns:@"urn:ietf:params:xml:ns:xmpp-bind"];
@@ -3652,7 +3707,7 @@ enum XMPPStreamConfig
 **/
 - (void)handleAuth:(NSXMLElement *)authResponse
 {
-	NSLog(@"Stream:  handleAuth");
+//	NSLog(@"Stream:  handleAuth");
 	NSAssert(dispatch_get_specific(xmppQueueTag), @"Invoked on incorrect queue");
 	
 	XMPPLogTrace();
@@ -4608,6 +4663,13 @@ enum XMPPStreamConfig
 	
 	if (state == STATE_XMPP_NEGOTIATING)
 	{
+        //During processing other features, we shall not set rootElement
+        for (id<XMPPElementHandler> handler in registeredElementHandlers) {
+            if ([handler handleElement:element]) {
+                return ;
+            }
+        }
+        
 		// We've just read in the stream features
 		// We consider this part of the root element, so we'll add it (replacing any previously sent features)
     [rootElement setChildren:@[element]];
