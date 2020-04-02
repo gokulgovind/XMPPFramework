@@ -114,6 +114,12 @@ extern NSString *const XMPPStreamDidChangeMyJIDNotification;
 - (void)registerCustomElementNames:(NSSet<NSString*> *)names;
 - (void)unregisterCustomElementNames:(NSSet<NSString*> *)names;
 
+// A Wrapper, prepared for stream compression
+- (void)writeData:(NSData *)data withTimeout:(NSTimeInterval)timeout tag:(long)tag;
+- (void)readDataWithTimeout:(NSTimeInterval)timeout tag:(long)tag;
+
+- (void)sendOpeningNegotiation;
+
 @end
 
 @interface XMPPModule (/* Internal */)

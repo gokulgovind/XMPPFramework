@@ -736,7 +736,6 @@ extern const NSTimeInterval XMPPStreamTimeoutNone;
 - (void)writeDataForCompression:(NSData *)data;
 - (void)readDataWithTimeoutForCompression;
 - (void)sendOpeningNegotiation;
-- (void)sendOpeningNegotiationAfterCompression;
 /**
  * Allows for enumeration of the currently registered modules.
  * 

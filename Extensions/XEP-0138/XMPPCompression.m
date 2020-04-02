@@ -346,7 +346,7 @@ static NSString * const XMPPCompressionProtocolNS = @"http://jabber.org/protocol
 {
     //This will reset parser, restart stream
     XMPPLogSend(@"SEND (start a compressing stream)");
-    [self.xmppStream sendOpeningNegotiationAfterCompression];
+    [self.xmppStream sendOpeningNegotiation];
     [self.xmppStream readDataWithTimeoutForCompression];
 }
 
