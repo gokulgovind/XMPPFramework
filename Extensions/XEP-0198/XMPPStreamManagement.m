@@ -4,6 +4,7 @@
 #import "XMPPTimer.h"
 #import "XMPPLogging.h"
 #import "NSNumber+XMPP.h"
+#import "XMPPMessage+XEP_0085.h"
 
 #if ! __has_feature(objc_arc)
 #warning This file must be compiled with ARC. Use -fobjc-arc flag (or convert project to ARC).
@@ -1623,8 +1624,9 @@
 - (void)xmppStream:(XMPPStream *)sender didSendMessage:(XMPPMessage *)message
 {
 	XMPPLogTrace();
-	
-	if (isStarted || enableSent)
+	BOOL chatState = NO;
+	chatState = [message hasChatState];
+	if ((isStarted || enableSent) && !chatState)
 	{
 		[self processSentElement:message];
 	}
