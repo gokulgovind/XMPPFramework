@@ -1624,9 +1624,9 @@
 - (void)xmppStream:(XMPPStream *)sender didSendMessage:(XMPPMessage *)message
 {
 	XMPPLogTrace();
-	BOOL chatState = NO;
-	chatState = [message hasChatState];
-	if ((isStarted || enableSent) && !chatState)
+	BOOL isChatStateMessage = NO;
+	isChatStateMessage = ([message hasComposingChatState] || [message hasPausedChatState]);
+	if ((isStarted || enableSent) && !isChatStateMessage)
 	{
 		[self processSentElement:message];
 	}
