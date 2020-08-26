@@ -1625,7 +1625,8 @@
 {
 	XMPPLogTrace();
 	BOOL isChatStateMessage = NO;
-	isChatStateMessage = ([message hasComposingChatState] || [message hasPausedChatState]);
+	BOOL hasBody = [message isChatMessageWithBody];
+	isChatStateMessage = ([message hasChatState] && !hasBody);
 	if ((isStarted || enableSent) && !isChatStateMessage)
 	{
 		[self processSentElement:message];
