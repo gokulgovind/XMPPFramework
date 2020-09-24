@@ -58,6 +58,7 @@
 	
 	NSUInteger autoRequest_stanzaCount;
 	NSTimeInterval autoRequest_timeout;
+	BOOL noACKforChatStateMessages;
 	
 	NSUInteger autoAck_stanzaCount;
 	NSTimeInterval autoAck_timeout;
@@ -170,7 +171,7 @@
 		dispatch_async(moduleQueue, block);
 }
 
-- (void)automaticallyRequestAcksAfterStanzaCount:(NSUInteger)stanzaCount orTimeout:(NSTimeInterval)timeout
+- (void)automaticallyRequestAcksAfterStanzaCount:(NSUInteger)stanzaCount orTimeout:(NSTimeInterval)timeout ignoreChatStates:(BOOL)ignore
 {
 	XMPPLogTrace();
 	
@@ -178,6 +179,7 @@
 		
 		self->autoRequest_stanzaCount = stanzaCount;
 		self->autoRequest_timeout = MAX(0.0, timeout);
+		self->noACKforChatStateMessages = ignore;
 		
 		if (self->autoRequestTimer) {
 			[self->autoRequestTimer updateTimeout:self->autoRequest_timeout fromOriginalStartTime:YES];
@@ -958,8 +960,14 @@
 	
 	XMPPLogVerbose(@"%@: processSentElement (%@): lastHandledByServer(%u) pending(%lu)",
 	               THIS_FILE, [element name], lastHandledByServer, (unsigned long)[unackedByServer count]);
-	
-	[self maybeRequestAck];
+	XMPPMessage * message = [XMPPMessage messageFromElement:element];
+	BOOL isChatStateMessage = [message hasChatState];
+	if (isChatStateMessage && noACKforChatStateMessages) {
+		return;
+	}else{
+		[self maybeRequestAck];
+	}
+		
 }
 
 /**
