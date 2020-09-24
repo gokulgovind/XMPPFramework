@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import "XMPP.h"
+#import "XMPPMessage+XEP_0085.h"
 
 #define _XMPP_STREAM_MANAGEMENT_H
 
@@ -165,8 +166,13 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * The default stanzaCount is 0 (disabled).
  * The default timeout is 0.0 seconds (disabled).
+ *
+ * @param ignoreChatStates
+ *      This flag will ask stream managment not to request ACK for chat state messages (compossing, paused, presence..)
+ *      To make this work @timeout should be 0.
 **/
-- (void)automaticallyRequestAcksAfterStanzaCount:(NSUInteger)stanzaCount orTimeout:(NSTimeInterval)timeout;
+- (void)automaticallyRequestAcksAfterStanzaCount:(NSUInteger)stanzaCount orTimeout:(NSTimeInterval)timeout ignoreChatStates:(BOOL)ignore
+;
 
 /**
  * Returns the current auto-request configuration.
